@@ -49,6 +49,13 @@ button {
 	cursor: pointer;
 }
 
+/* Make the current control easy to spot when navigating with the keyboard. */
+button:focus-visible,
+select:focus-visible {
+	outline: 3px solid #1d4ed8;
+	outline-offset: 3px;
+}
+
 .animal-card {
 	margin-bottom: 12px;
 	padding: 16px;
