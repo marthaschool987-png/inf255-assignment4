@@ -2,13 +2,9 @@
 
 /*
  * Animal Adoption Board
- *
- * EXTRA CREDIT: If you build any Assignment 4 extra credit features, list
- * them here (see README.md). Features that are not listed here will not be
- * graded.
- *
- *   -
- *   -
+ * Button clicks change the animal data or the selected view, then redraw
+ * the cards so the page reflects the user's choices.
+ * EXTRA CREDIT: None.
  */
 
 // ------------------------------------
@@ -34,9 +30,6 @@ let activeSort = "default";
 // Display Animals
 // ------------------------------------
 
-// Clears the list and draws one card for each animal in animalArray.
-// It draws whatever array it is given, so updateDisplay() decides which
-// animals to show and in what order.
 function displayAnimals(animalArray) {
 	const animalList = document.querySelector("#animal-list");
 	animalList.innerHTML = "";
@@ -49,35 +42,33 @@ function displayAnimals(animalArray) {
 		return;
 	}
 
+	// Rebuild each card from the current data so its status and button agree.
 	animalArray.forEach((animal) => {
-		const card = document.createElement("article");
+		const card = document.createElement("div");
 		card.classList.add("animal-card");
-
-		// The adopted class lets style.css gray out adopted animals.
 		if (animal.adopted) {
 			card.classList.add("adopted");
 		}
 
-		const heading = document.createElement("h3");
-		heading.textContent = animal.name;
-
-		const details = document.createElement("p");
-		details.textContent = `${animal.species}, ${animal.age} years old`;
-
+		const name = document.createElement("h3");
+		name.textContent = animal.name;
+		const species = document.createElement("p");
+		species.textContent = "Species: " + animal.species;
+		const age = document.createElement("p");
+		age.textContent = "Age: " + animal.age + " years";
 		const status = document.createElement("p");
 		status.textContent = animal.adopted ? "Adopted" : "Available";
-
 		const button = document.createElement("button");
 		button.type = "button";
 		button.textContent = animal.adopted ? "Return" : "Adopt";
 
-		// This callback doesn't run now. It runs later, each time the user
-		// clicks this card's button. It knows which animal to change because
-		// the arrow function was created inside this forEach() callback, so it
-		// remembers this card's animal (a closure) and passes its id along.
-		button.addEventListener("click", () => toggleAdoption(animal.id));
+		// This callback runs when the user clicks, not while the card is built.
+		// Its closure remembers this animal, so it passes the right id later.
+		button.addEventListener("click", () => {
+			toggleAdoption(animal.id);
+		});
 
-		card.append(heading, details, status, button);
+		card.append(name, species, age, status, button);
 		animalList.appendChild(card);
 	});
 }
@@ -86,16 +77,15 @@ function displayAnimals(animalArray) {
 // Adopt or Return an Animal
 // ------------------------------------
 
-// Flips one animal between available and adopted, then redraws the page.
 function toggleAdoption(animalId) {
-	const animal = animals.find((a) => a.id === animalId);
-
-	// find() returns undefined when nothing matches, so stop here instead of
-	// causing an error on the next line.
+	// Find by id because a card's position can change when the list is sorted.
+	const animal = animals.find((animal) => animal.id === animalId);
 	if (!animal) {
 		return;
 	}
 
+	// Flipping the same value handles both adoption and return. Redrawing
+	// keeps the card in sync with the data and the current filter.
 	animal.adopted = !animal.adopted;
 	updateDisplay();
 }
@@ -104,28 +94,26 @@ function toggleAdoption(animalId) {
 // Filter, Sort, and Update
 // ------------------------------------
 
-// Builds the list the user asked for (activeFilter and activeSort), draws
-// it, and refreshes the count.
 function updateDisplay() {
-	// sort() rearranges the array it is called on. Working on a copy leaves
-	// the animals array in its original order, so "Original order" still
-	// has something to go back to.
-	let visible = animals.slice();
+	// sort() changes its array. Sorting a copy preserves the shelter's
+	// original order so the user can switch back to it later.
+	let visibleAnimals = animals.slice();
 
+	// Keep only animals that match the selected adoption status.
 	if (activeFilter === "available") {
-		visible = visible.filter((a) => !a.adopted);
+		visibleAnimals = visibleAnimals.filter((animal) => !animal.adopted);
 	} else if (activeFilter === "adopted") {
-		visible = visible.filter((a) => a.adopted);
+		visibleAnimals = visibleAnimals.filter((animal) => animal.adopted);
 	}
 
 	if (activeSort === "name") {
-		visible.sort((a, b) => a.name.localeCompare(b.name));
+		visibleAnimals.sort((a, b) => a.name.localeCompare(b.name));
 	} else if (activeSort === "age") {
-		// A negative result puts a before b, so smaller ages come first.
-		visible.sort((a, b) => a.age - b.age);
+		visibleAnimals.sort((a, b) => a.age - b.age);
 	}
 
-	displayAnimals(visible);
+	// Use the same redraw path after a data change or a control change.
+	displayAnimals(visibleAnimals);
 	updateCount();
 }
 
@@ -133,12 +121,12 @@ function updateDisplay() {
 // Available Count
 // ------------------------------------
 
-// Counts from the full animals array, not the visible cards, so the
-// message doesn't change when the user filters or sorts.
 function updateCount() {
-	const countText = document.querySelector("#animal-count");
-	const available = animals.filter((a) => !a.adopted);
-	countText.textContent = `${available.length} of ${animals.length} animals are available for adoption.`;
+	// Count the full shelter list so filtering cards does not change the total.
+	const availableAnimals = animals.filter((animal) => !animal.adopted);
+	const animalCount = document.querySelector("#animal-count");
+	animalCount.textContent = availableAnimals.length + " of " + animals.length
+		+ " animals are available for adoption.";
 }
 
 // ------------------------------------
@@ -150,16 +138,22 @@ const availableButton = document.querySelector("#show-available");
 const adoptedButton = document.querySelector("#show-adopted");
 const sortSelect = document.querySelector("#sort-animals");
 
-// All three filter buttons do the same thing with a different value, so
-// they share this function.
-function setFilter(filter) {
-	activeFilter = filter;
+// Save each choice before redrawing. Keeping filter and sort separately
+// lets the user change one without losing the other.
+allButton.addEventListener("click", () => {
+	activeFilter = "all";
 	updateDisplay();
-}
+});
 
-allButton.addEventListener("click", () => setFilter("all"));
-availableButton.addEventListener("click", () => setFilter("available"));
-adoptedButton.addEventListener("click", () => setFilter("adopted"));
+availableButton.addEventListener("click", () => {
+	activeFilter = "available";
+	updateDisplay();
+});
+
+adoptedButton.addEventListener("click", () => {
+	activeFilter = "adopted";
+	updateDisplay();
+});
 
 sortSelect.addEventListener("change", () => {
 	activeSort = sortSelect.value;
