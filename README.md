@@ -351,3 +351,4 @@ git push
 - `README.md` starts with your **About this project** section.
 - Any extra credit features are listed at the top of `script.js`.
 - Your repository has at least three commits you made.
+

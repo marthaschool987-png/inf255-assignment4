@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 "use strict";
 
 /*
@@ -62,7 +64,12 @@ function displayAnimals(animalArray) {
 			toggleAdoption(animal.id);
 		});
 
-		card.append(name, species, age, status, button);
+		// Day.js formats the intake date and counts whole days since arrival.
+        const arrival = document.createElement("p");
+        arrival.className = "arrival-date";
+        const days = dayjs().diff(animal.intakeDate, "day");
+        arrival.textContent = `Arrived ${dayjs(animal.intakeDate).format("MMM D, YYYY")} (${days} days ago)`;
+        card.append(name, species, age, status, arrival, button);
 		animalList.appendChild(card);
 	});
 }
@@ -106,6 +113,9 @@ function updateDisplay() {
 		visibleAnimals.sort((a, b) => a.name.localeCompare(b.name));
 	} else if (activeSort === "age") {
 		visibleAnimals.sort((a, b) => a.age - b.age);
+    } else if (activeSort === "newest") {
+        // The later intake timestamp comes first; this also works on filtered lists.
+        visibleAnimals.sort((a, b) => dayjs(b.intakeDate).valueOf() - dayjs(a.intakeDate).valueOf());
 	}
 
 	// Use the same redraw path after a data change or a control change.
